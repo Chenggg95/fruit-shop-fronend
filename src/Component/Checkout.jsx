@@ -1,61 +1,52 @@
-import axios from 'axios';
-import React, { useEffect, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import priceList from './PriceList';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router';
+import "../App.css"
 
 const Checkout = () => {
     const navigate = useNavigate();
-    const location = useLocation();
-    const {fruitList} = location.state;
-    const [total, setTotal] = useState(0);
-    const [transaction, setTransaction] = useState({
-      fruitList: [],
-      total: 0
-    });
+    const [fruitList, setFruitList] = useState([]);
 
-    useEffect(() => {
-      let calculatedTotal = 0;
-      for(let i = 0; i < fruitList.length; i++){
-        const fruitItem = fruitList[i];
-        const quantity = fruitItem.quantity;
-        const price = priceList[fruitItem.fruit];
-        calculatedTotal += price * quantity;
-      }
-      setTotal(calculatedTotal);
-    }, [fruitList]
-    );
+    const addItem = (event) => {
+        event.preventDefault();
+        const newFruit = {
+        fruit: event.target.elements.fruit.value,
+        quantity: event.target.elements.quantity.value
+        };
+        setFruitList((prevFruitList) => [...prevFruitList, newFruit]);
+        event.target.reset();
+    };
 
-    const handleClick = (event) => {
-      let decision = event.target.id;
-
-      if(decision === "yes"){
-        setTransaction({
-          fruitList: fruitList,
-          total: total
-        })
-        axios.post('http://localhost:3001/savetransaction',{transaction})
-          .then((response) => response.data)
-          .then((data) => {
-                            console.log(data);
-                            navigate("/saved");
-                          })
-          .catch((error) => console.log(error));
-
-        
-      }
-      else if (decision === "no"){
-        navigate("/main");
-      }
+    const checkout = () => {
+        navigate("/savetransaction", {state: {fruitList}});
     }
-    
-  return (
-    <>
-      <h2>The calculated total price is ${total}.</h2>
-      <h2>Do you want to save the transaction?</h2>
-      <button type = "button" id="yes" onClick={handleClick}>yes</button>
-      <button type = "button" id="no" onClick={handleClick}>no</button>
-    </>
-  )
+
+    return (
+        <>
+        <form onSubmit={addItem}>
+            <table>
+                <tbody>
+                    <tr>
+                        <td>Fruit:</td>
+                        <td><input type="text" id="fruit" name="fruit"/></td>
+                        <td>Quantity:</td>
+                        <td><input type="number" id="quantity" name="quantity"/></td>
+                        <td><button type="submit">Add Item</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </form>
+        <div className="checkout"><button type="button" onClick={checkout}>Checkout</button></div>
+        <h2>Items added</h2>
+        <ul className="fruit-details">
+            {fruitList.map((fruit, index) => (
+                <li key={index}>
+                    Fruit: {fruit.fruit}, Quantity: {fruit.quantity}
+                </li>
+            ))}
+        </ul>
+        
+        </>
+    );
 }
 
 export default Checkout;
